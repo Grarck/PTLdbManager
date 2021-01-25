@@ -1,0 +1,45 @@
+[DB]
+# Connector: mysql
+dbCONNECTOR = mysql
+dbUSER = 
+dbPASS = 
+dbSERVER = localhost
+#Leave dbSOCKET empty for tcp connection
+dbSOCKET = /var/run/mysqld/mysqld.sock
+
+[S2]
+#Database name. Needs to be created before executing the sript
+dbNAME = db_Pu_S2
+data_files = 
+#Number or cores for parallel processing
+#Set to 0 to deactivate parallel processing
+ncpu = 0
+#Size of chunks for paper processing and database ingestion
+chunksize = 100000
+
+[FIS]
+#Database name. Needs to be created before executing the script
+dbNAME = db_Pr_FIS
+download_folder =
+#time to sleep between URL downloads. Increasing facilitates a complete
+#download in one execution, at the cost of increasing execution time
+ttsleep = 5
+
+[BOE]
+dbNAME = db_Law_BOE
+xml_dir = data_Law_BOE/XML/
+lemas_dir = data_Law_BOE/LEMAS/
+
+[Lemmatizer]
+server = http://localhost:7777/en/annotations/
+#Online demonstration service
+#server = http://librairy.linkeddata.es/nlp/annotations/
+stw_file = ./lemmatizer/lemafiles/stopwords/stop-words-english5.txt
+dict_eq_file =
+POS = "NOUN", "VERB", "ADJECTIVE"
+removenumbers = True
+#If true, sentence information will be kept, which is necessary when training embedding models
+keepSentence = True
+#Number of threads that will concurrently send lemmatization requests to the server
+concurrent_posts = 10
+
