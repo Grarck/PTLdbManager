@@ -25,7 +25,6 @@ from lemmatizer.ENlemmatizer import ENLemmatizer
 
 # db.createDBschema()
 
-
 try:
     # UCS-4
     regex = re.compile('[\U00010000-\U0010ffff]')
@@ -38,8 +37,15 @@ def clean_utf8(rawdata):
     return regex.sub(' ', rawdata)
 
 
-def main(interface=False, resetDB=False, importPapers=False, importCitations=False, importFields=False,
-         importAuthors=False, importEntities=False, lemmatize=False, lemmas_query=None):
+def main(interface=False,
+         resetDB=False,
+         importPapers=False,
+         importCitations=False,
+         importFields=False,
+         importAuthors=False,
+         importEntities=False,
+         lemmatize=False,
+         lemmas_query=None):
     """
     """
 
@@ -68,13 +74,21 @@ def main(interface=False, resetDB=False, importPapers=False, importCitations=Fal
 
     if dbSOCKET:
         print('socket')
-        DB = S2manager(db_name=dbNAME, db_connector=dbCONNECTOR, path2db=None,
-                       db_server=dbSERVER, db_user=dbUSER, db_password=dbPASS,
+        DB = S2manager(db_name=dbNAME,
+                       db_connector=dbCONNECTOR,
+                       path2db=None,
+                       db_server=dbSERVER,
+                       db_user=dbUSER,
+                       db_password=dbPASS,
                        unix_socket=dbSOCKET)
     else:
         print('tcp')
-        DB = S2manager(db_name=dbNAME, db_connector=dbCONNECTOR, path2db=None,
-                       db_server=dbSERVER, db_user=dbUSER, db_password=dbPASS)
+        DB = S2manager(db_name=dbNAME,
+                       db_connector=dbCONNECTOR,
+                       path2db=None,
+                       db_server=dbSERVER,
+                       db_user=dbUSER,
+                       db_password=dbPASS)
 
     ####################################################
     # 1. If activated, display console
@@ -85,18 +99,24 @@ def main(interface=False, resetDB=False, importPapers=False, importCitations=Fal
             print('1. Reset database')
             print('2. Import authors & papers from data files')
             print('3. Import citations from data files')
-            print('4. Import journals, volumes & Fields of Study data from data files')
+            print(
+                '4. Import journals, volumes & Fields of Study data from data files'
+            )
             print('5. Import authorship from data files')
             print('6. Import entities of each paper from data files')
             print('7. Extract lemmas for the imported papers')
             print('0. Quit')
             selection = input()
+
             if selection == 'a':
-                print(DB.checkTable('S2papers', 'S2paperID'))
+                df = DB.findDuplicated('citations', 'paperID1, paperID2')
+                print(df)
 
             if selection == '1':
                 # 2. If activated, remove and create again database tables
-                print('Regenerating the database. Existing data will be removed.')
+                print(
+                    'Regenerating the database. Existing data will be removed.'
+                )
                 # The following method deletes all existing tables, and create them
                 # again without data.
                 DB.deleteDBtables()
@@ -111,17 +131,19 @@ def main(interface=False, resetDB=False, importPapers=False, importCitations=Fal
                 t1 = time.time()
 
                 print('Importing authors data ...')
-                DB.importAuthorsData(data_files, chunksize)
+                DB.importAuthorsData(data_files, ncpu, chunksize)
                 t2 = time.time()
                 print(f'paper: {t1-t0}')
                 print(f'author: {t2-t1}')
                 print(f'total: {t2-t0}')
-                
+
             elif selection == '3':
                 # 4. If activated, citations data
                 # will be imported from S2 data files
                 print('Importing citations data ...')
-                DB.importCitations(data_files, chunksize)
+                t0 = time.time()
+                DB.importCitations(data_files, ncpu, chunksize)
+                print(f'Time: {time.time()-t0}')
             elif selection == '4':
                 # 5. If activated, journals, volumes, and Fields of Study data
                 # will be imported from S2 data files
@@ -151,14 +173,17 @@ def main(interface=False, resetDB=False, importPapers=False, importCitations=Fal
                 stw_file = cf.get('Lemmatizer', 'stw_file')
                 dict_eq_file = cf.get('Lemmatizer', 'dict_eq_file')
                 POS = cf.get('Lemmatizer', 'POS')
-                concurrent_posts = int(
-                    cf.get('Lemmatizer', 'concurrent_posts'))
+                concurrent_posts = int(cf.get('Lemmatizer',
+                                              'concurrent_posts'))
                 removenumbers = cf.get('Lemmatizer', 'removenumbers') == 'True'
                 keepSentence = cf.get('Lemmatizer', 'keepSentence') == 'True'
 
                 # Initialize lemmatizer
-                ENLM = ENLemmatizer(lemmas_server=lemmas_server, stw_file=stw_file,
-                                    dict_eq_file=dict_eq_file, POS=POS, removenumbers=removenumbers,
+                ENLM = ENLemmatizer(lemmas_server=lemmas_server,
+                                    stw_file=stw_file,
+                                    dict_eq_file=dict_eq_file,
+                                    POS=POS,
+                                    removenumbers=removenumbers,
                                     keepSentence=keepSentence)
                 selectOptions = 'paperID, title, paperAbstract'
                 if lemmas_query:
@@ -166,21 +191,25 @@ def main(interface=False, resetDB=False, importPapers=False, importCitations=Fal
                 else:
                     filterOptions = 'paperID>0'
                 init_time = time.time()
-                df = DB.readDBtable('S2papers', limit=chunksize, selectOptions=selectOptions,
-                                    filterOptions=filterOptions, orderOptions='paperID ASC')
+                df = DB.readDBtable('S2papers',
+                                    limit=chunksize,
+                                    selectOptions=selectOptions,
+                                    filterOptions=filterOptions,
+                                    orderOptions='paperID ASC')
                 while (len(df)):
-                    cont = cont+len(df)
+                    cont = cont + len(df)
 
                     # Next time, we will read from the largest paperID. This is the
                     # last element of the dataframe, given that we requested an ordered df
-                    largest_id = df['paperID'][len(df)-1]
+                    largest_id = df['paperID'][len(df) - 1]
                     print('Number of articles processed:', cont)
                     print('Last Article Id read:', largest_id)
 
                     df['alltext'] = df['title'] + '. ' + df['paperAbstract']
                     df['alltext'] = df['alltext'].apply(clean_utf8)
-                    lemasBatch = ENLM.lemmatizeBatch(df[['paperID', 'alltext']].values.tolist(),
-                                                     processes=concurrent_posts)
+                    lemasBatch = ENLM.lemmatizeBatch(
+                        df[['paperID', 'alltext']].values.tolist(),
+                        processes=concurrent_posts)
                     # Remove entries that where not lemmatized correctly
                     lemasBatch = [[el[0], clean_utf8(el[1])]
                                   for el in lemasBatch if len(el[1])]
@@ -191,11 +220,14 @@ def main(interface=False, resetDB=False, importPapers=False, importCitations=Fal
                             str(largest_id) + ' AND ' + lemmas_query
                     else:
                         filterOptions = 'paperID>' + str(largest_id)
-                    df = DB.readDBtable('S2papers', limit=chunksize, selectOptions=selectOptions,
-                                        filterOptions=filterOptions, orderOptions='paperID ASC')
+                    df = DB.readDBtable('S2papers',
+                                        limit=chunksize,
+                                        selectOptions=selectOptions,
+                                        filterOptions=filterOptions,
+                                        orderOptions='paperID ASC')
                     elapsed_time = time.time() - init_time
-                    print('Elapsed Time (seconds):', time.strftime(
-                        "%H:%M:%S", time.gmtime(elapsed_time)))
+                    print('Elapsed Time (seconds):',
+                          time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
             elif selection == '0':
                 return
@@ -313,25 +345,42 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(prog='interface')
     parser.add_argument('--interface', action='store_true')
-    parser.add_argument('--resetDB', action='store_true',
-                        help='If activated, the database will be reset and re-created')
-    parser.add_argument('--importPapers', action='store_true',
+    parser.add_argument(
+        '--resetDB',
+        action='store_true',
+        help='If activated, the database will be reset and re-created')
+    parser.add_argument('--importPapers',
+                        action='store_true',
                         help='If activated, import author and paper data')
-    parser.add_argument('--importCitations', action='store_true',
+    parser.add_argument('--importCitations',
+                        action='store_true',
                         help='If activated, import citation data')
-    parser.add_argument('--importFields', action='store_true',
-                        help='If activated, import journals, volumes, fields data')
-    parser.add_argument('--importAuthors', action='store_true',
+    parser.add_argument(
+        '--importFields',
+        action='store_true',
+        help='If activated, import journals, volumes, fields data')
+    parser.add_argument('--importAuthors',
+                        action='store_true',
                         help='If activated, import authorship data')
-    parser.add_argument('--importEntities', action='store_true',
+    parser.add_argument('--importEntities',
+                        action='store_true',
                         help='If activated, import entities data')
-    parser.add_argument('--lemmatize', action='store_true',
+    parser.add_argument('--lemmatize',
+                        action='store_true',
                         help='If activated, lemmatize database')
-    parser.add_argument('--lemmas_query', type=str, dest='lemmas_query',
+    parser.add_argument('--lemmas_query',
+                        type=str,
+                        dest='lemmas_query',
                         help='Query for DB elements to lemmatize')
     parser.set_defaults(lemmas_query=None)
     args = parser.parse_args()
 
-    main(interface=args.interface, resetDB=args.resetDB, importPapers=args.importPapers, importCitations=args.importCitations,
-         importFields=args.importFields, importAuthors=args.importAuthors, importEntities=args.importEntities,
-         lemmatize=args.lemmatize, lemmas_query=args.lemmas_query)
+    main(interface=args.interface,
+         resetDB=args.resetDB,
+         importPapers=args.importPapers,
+         importCitations=args.importCitations,
+         importFields=args.importFields,
+         importAuthors=args.importAuthors,
+         importEntities=args.importEntities,
+         lemmatize=args.lemmatize,
+         lemmas_query=args.lemmas_query)

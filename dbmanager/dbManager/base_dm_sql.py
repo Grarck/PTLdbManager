@@ -59,10 +59,16 @@ class BaseDMsql(object):
     """
     Data manager base class.
     """
-
-    def __init__(self, db_name, db_connector, path2db=None,
-                 db_server=None, db_user=None, db_password=None,
-                 db_port=None, unix_socket=None, charset='utf8mb4'):
+    def __init__(self,
+                 db_name,
+                 db_connector,
+                 path2db=None,
+                 db_server=None,
+                 db_user=None,
+                 db_password=None,
+                 db_port=None,
+                 unix_socket=None,
+                 charset='utf8mb4'):
         """
         Initializes a DataManager object
 
@@ -90,7 +96,7 @@ class BaseDMsql(object):
         self.unix_socket = unix_socket
 
         # Other class variables
-        self.dbON = False    # Will switch to True when the db is connected.
+        self.dbON = False  # Will switch to True when the db is connected.
         # Connector to database
         self._conn = None
         # Cursor of the database
@@ -101,29 +107,35 @@ class BaseDMsql(object):
             if self.connector == 'mysql':
                 if self.unix_socket:
                     self._conn = MySQLdb.connect(host=self.server,
-                                                 user=self.user, passwd=self.password,
+                                                 user=self.user,
+                                                 passwd=self.password,
                                                  db=self.dbname,
-                                                 unix_socket=unix_socket, charset=charset)
+                                                 unix_socket=unix_socket,
+                                                 charset=charset)
                 elif self.port:
                     self._conn = MySQLdb.connect(host=self.server,
-                                                 user=self.user, passwd=self.password,
-                                                 db=self.dbname, port=self.port,
+                                                 user=self.user,
+                                                 passwd=self.password,
+                                                 db=self.dbname,
+                                                 port=self.port,
                                                  charset=charset)
                 else:
                     self._conn = MySQLdb.connect(host=self.server,
-                                                 user=self.user, passwd=self.password,
-                                                 db=self.dbname, charset=charset)
+                                                 user=self.user,
+                                                 passwd=self.password,
+                                                 db=self.dbname,
+                                                 charset=charset)
                 self._c = self._conn.cursor()
                 print(
-                    'MySQL database connection successful. Default database:', self.dbname)
+                    'MySQL database connection successful. Default database:',
+                    self.dbname)
                 self.dbON = True
                 # self._conn.set_character_set('utf8')
             elif self.connector == 'sqlite3':
                 # sqlite3
                 # sqlite file will be in the root of the project, we read the
                 # name from the config file and establish the connection
-                db_fname = os.path.join(self._path2db,
-                                        self.dbname + '.db')
+                db_fname = os.path.join(self._path2db, self.dbname + '.db')
                 print("---- Connecting to {}".format(db_fname))
                 self._conn = sqlite3.connect(db_fname)
                 self._c = self._conn.cursor()
@@ -203,8 +215,7 @@ class BaseDMsql(object):
             if columnname not in self.getColumnNames(tablename):
 
                 # Allow columnames with spaces
-                columnname = '`'+columnname+'`'
-
+                columnname = '`' + columnname + '`'
                 """# Fit characters to the allowed format if necessary
                 fmt = ''
                 if (self.connector == 'mysql' and
@@ -226,8 +237,9 @@ class BaseDMsql(object):
                 self._conn.commit()
 
             else:
-                print(("WARNING: Column {0} already exists in table {1}."
-                       ).format(columnname, tablename))
+                print((
+                    "WARNING: Column {0} already exists in table {1}.").format(
+                        columnname, tablename))
 
         else:
             print('Error adding column to table. Please, select a valid ' +
@@ -253,7 +265,7 @@ class BaseDMsql(object):
             if columnname in self.getColumnNames(tablename):
 
                 # Allow columnames with spaces
-                columname = '`'+columnname+'`'
+                columname = '`' + columnname + '`'
 
                 # ALTER TABLE DROP COLUMN IS ONLY SUPPORTED IN MYSQL
                 if self.connector == 'mysql':
@@ -266,7 +278,9 @@ class BaseDMsql(object):
                     self._conn.commit()
 
                 else:
-                    print('Error deleting column. Column drop not supported for SQLITE')
+                    print(
+                        'Error deleting column. Column drop not supported for SQLITE'
+                    )
 
             else:
                 print('Error deleting column. The column does not exist')
@@ -279,8 +293,12 @@ class BaseDMsql(object):
 
         return
 
-    def readDBtable(self, tablename, limit=None, selectOptions=None,
-                    filterOptions=None, orderOptions=None):
+    def readDBtable(self,
+                    tablename,
+                    limit=None,
+                    selectOptions=None,
+                    filterOptions=None,
+                    orderOptions=None):
         """
         Read data from a table in the database can choose to read only some
         specific fields
@@ -323,16 +341,21 @@ class BaseDMsql(object):
 
             # Return the pandas dataframe. Note that numbers in text format
             # are not converted to
-            return pd.read_sql(sqlQuery, con=self._conn,
-                               coerce_float=False)
+            return pd.read_sql(sqlQuery, con=self._conn, coerce_float=False)
 
         except Exception as E:
             print(str(E))
             print('Error in query:', sqlQuery)
             return
 
-    def readDBchunks(self, tablename, orderField, chunksize=50000,
-                     selectOptions=None, limit=None, filterOptions=None, verbose=False):
+    def readDBchunks(self,
+                     tablename,
+                     orderField,
+                     chunksize=50000,
+                     selectOptions=None,
+                     limit=None,
+                     filterOptions=None,
+                     verbose=False):
         """
         Read data from a table in the database using chunks. 
         Can choose to read only some specific fields
@@ -365,13 +388,17 @@ class BaseDMsql(object):
 
         selectOptions = selectOptions + ', ' + orderField
 
-        df = self.readDBtable(tablename, limit=next_chunk, selectOptions=selectOptions,
-                              filterOptions=filterOptions, orderOptions=orderField)
+        df = self.readDBtable(tablename,
+                              limit=next_chunk,
+                              selectOptions=selectOptions,
+                              filterOptions=filterOptions,
+                              orderOptions=orderField)
 
         while (len(df)):
-            cont = cont+len(df)
+            cont = cont + len(df)
             if verbose:
-                print('[DBManager (readDBchunks)] Number of rows read so far:', cont)
+                print('[DBManager (readDBchunks)] Number of rows read so far:',
+                      cont)
             if limit:
                 remaining = limit - cont
                 next_chunk = min(remaining, chunksize)
@@ -380,13 +407,17 @@ class BaseDMsql(object):
             yield df.iloc[:, :-1]
 
             # Next we need to start from last retrieved element
-            filtercondition = orderField + '>' + str(df.iloc[:, -1][len(df)-1])
+            filtercondition = orderField + '>' + str(df.iloc[:,
+                                                             -1][len(df) - 1])
             if filterOptions:
                 filtercondition = filtercondition + ' AND ' + filterOptions
 
             if next_chunk > 0:
-                df = self.readDBtable(tablename, limit=next_chunk, selectOptions=selectOptions,
-                                      filterOptions=filtercondition, orderOptions=orderField)
+                df = self.readDBtable(tablename,
+                                      limit=next_chunk,
+                                      selectOptions=selectOptions,
+                                      filterOptions=filtercondition,
+                                      orderOptions=orderField)
             else:
                 # If maximum number of records has been reached, set df to empty list to exit
                 df = []
@@ -448,7 +479,12 @@ class BaseDMsql(object):
 
         return cols, n_rows
 
-    def insertInTable(self, tablename, columns, arguments, chunksize=None, verbose=False):
+    def insertInTable(self,
+                      tablename,
+                      columns,
+                      arguments,
+                      chunksize=None,
+                      verbose=False):
         """
         Insert new records into table
 
@@ -464,11 +500,11 @@ class BaseDMsql(object):
         """
 
         # Make sure columns is a list, and not a single string
-        if not isinstance(columns, (list,)):
+        if not isinstance(columns, (list, )):
             columns = [columns]
 
         # To allow for column names that have spaces
-        columns = list(map(lambda x: '`'+x+'`', columns))
+        columns = list(map(lambda x: '`' + x + '`', columns))
 
         ncol = len(columns)
 
@@ -478,20 +514,20 @@ class BaseDMsql(object):
                 # Make sure we have a list of tuples; necessary for mysql
                 arguments = list(map(tuple, arguments))
 
-                sqlcmd = ('INSERT INTO ' + tablename +
-                          '(' + ','.join(columns) + ') VALUES (')
+                sqlcmd = ('INSERT INTO ' + tablename + '(' +
+                          ','.join(columns) + ') VALUES (')
                 if self.connector == 'mysql':
-                    sqlcmd += '%s' + (ncol-1)*',%s' + ')'
+                    sqlcmd += '%s' + (ncol - 1) * ',%s' + ')'
                 else:
-                    sqlcmd += '?' + (ncol-1)*',?' + ')'
+                    sqlcmd += '?' + (ncol - 1) * ',?' + ')'
 
                 if chunksize:
 
-                    n_chunks = np.ceil(len(arguments)/chunksize)
+                    n_chunks = np.ceil(len(arguments) / chunksize)
                     if verbose:
                         print()
-                        bar = Bar(
-                            'Inserting chunks of data in database', max=n_chunks)
+                        bar = Bar('Inserting chunks of data in database',
+                                  max=n_chunks)
                     for chk in chunks(arguments, chunksize):
                         if verbose:
                             print()
@@ -503,18 +539,23 @@ class BaseDMsql(object):
                         bar.finish()
 
                 else:
-
                     self._c.executemany(sqlcmd, arguments)
                     # Commit changes
                     self._conn.commit()
             else:
-                print('Error inserting data in table: The table does not exist')
+                print(
+                    'Error inserting data in table: The table does not exist')
         else:
             print('Error inserting data in table: number of columns mismatch')
 
         return
 
-    def deleteFromTable(self, tablename, columns, arguments, chunksize=None, verbose=False):
+    def deleteFromTable(self,
+                        tablename,
+                        columns,
+                        arguments,
+                        chunksize=None,
+                        verbose=False):
         """
         Delete rows from table
 
@@ -534,11 +575,11 @@ class BaseDMsql(object):
         """
 
         # Make sure columns is a list, and not a single string
-        if not isinstance(columns, (list,)):
+        if not isinstance(columns, (list, )):
             columns = [columns]
 
         # To allow for column names that have spaces
-        columns = list(map(lambda x: '`'+x+'`', columns))
+        columns = list(map(lambda x: '`' + x + '`', columns))
 
         ncol = len(columns)
 
@@ -556,7 +597,7 @@ class BaseDMsql(object):
 
                 if chunksize:
 
-                    n_chunks = np.ceil(len(arguments)/chunksize)
+                    n_chunks = np.ceil(len(arguments) / chunksize)
                     if verbose:
                         print()
                         bar = Bar('Deleting data from database', max=n_chunks)
@@ -576,10 +617,13 @@ class BaseDMsql(object):
                     self._conn.commit()
 
             else:
-                print('Error deleting data from table: The table does not exist')
+                print(
+                    'Error deleting data from table: The table does not exist')
 
         else:
-            print('Error deleting data from table table: number of columns mismatch')
+            print(
+                'Error deleting data from table table: number of columns mismatch'
+            )
 
         return
 
@@ -607,15 +651,15 @@ class BaseDMsql(object):
             return tuple(ls)
 
         # Make sure valueflds is a list, and not a single string
-        if not isinstance(valueflds, (list,)):
+        if not isinstance(valueflds, (list, )):
             valueflds = [valueflds]
 
         # To allow for column names that have spaces
-        valueflds = list(map(lambda x: '`'+x+'`', valueflds))
+        valueflds = list(map(lambda x: '`' + x + '`', valueflds))
 
         ncol = len(valueflds)
 
-        if len(values[0]) == (ncol+1):
+        if len(values[0]) == (ncol + 1):
             # Make sure the tablename is valid
             if tablename in self.getTableNames():
 
@@ -637,10 +681,10 @@ class BaseDMsql(object):
 
                 sqlcmd = 'UPDATE ' + tablename + ' SET '
                 if self.connector == 'mysql':
-                    sqlcmd += ', '.join([el+'=%s' for el in valueflds])
+                    sqlcmd += ', '.join([el + '=%s' for el in valueflds])
                     sqlcmd += ' WHERE ' + keyfld + '=%s'
                 else:
-                    sqlcmd += ', '.join([el+'=?' for el in valueflds])
+                    sqlcmd += ', '.join([el + '=?' for el in valueflds])
                     sqlcmd += ' WHERE ' + keyfld + '=?'
 
                 self._c.executemany(sqlcmd, values)
@@ -655,7 +699,7 @@ class BaseDMsql(object):
 
         return
 
-    def upsert(self, tablename, keyfld, tableID, df, robust=True):
+    def upsert(self, tablename, keyfld, tableID, df, robust=True, update=True):
         """
         Update records of a DB table with the values in the df
         This function implements the following additional functionality:
@@ -676,6 +720,7 @@ class BaseDMsql(object):
             df:         Dataframe that we wish to save in table tablename
             robust:     If False, verifications are skipped
                         (for a faster execution)
+            update:     If True, update previous values
 
         """
 
@@ -684,12 +729,15 @@ class BaseDMsql(object):
         if robust:
             if tablename in self.getTableNames():
                 if not keyfld in self.getColumnNames(tablename):
-                    print(f'Upsert function failed: Key field \"{keyfld}\" does not exist',
-                          'in the selected table \"{tablename}\" and/or dataframe')
+                    print(
+                        f'Upsert function failed: Key field \"{keyfld}\" does not exist',
+                        'in the selected table \"{tablename}\" and/or dataframe'
+                    )
                     return
                 elif not tableID in self.getColumnNames(tablename):
                     print(
-                        f'Unique identifier \"{tableID}\" not found in {tablename}')
+                        f'Unique identifier \"{tableID}\" not found in {tablename}'
+                    )
             else:
                 print('Upsert function failed: Table does not exist')
                 return
@@ -718,33 +766,42 @@ class BaseDMsql(object):
 
         # Get existing IDs in table
         S2_to_ID = {}
-        for df_DB in self.readDBchunks(tablename, tableID, chunksize=100000,
-                                       selectOptions=f'{tableID}, {keyfld}', verbose=True):
+        for df_DB in self.readDBchunks(tablename,
+                                       tableID,
+                                       chunksize=100000,
+                                       selectOptions=f'{tableID}, {keyfld}',
+                                       verbose=True):
             ID_to_S2_list = df_DB.values.tolist()
             S2_to_ID_list = [[el[1], el[0]] for el in ID_to_S2_list]
             aux_dict = dict(S2_to_ID_list)
             S2_to_ID = {**S2_to_ID, **aux_dict}
         keyintable = S2_to_ID.keys()
 
+        # Insert new values
         values_insert = list(
             filter(lambda x: x[0] not in keyintable, df.values))
-        values_update = list(
-            filter(lambda x: x[0] in keyintable, df.values))
-
-        if len(values_update):
-            print(f'Update {len(values_update)} values in {tablename}')
-            df_ids = [S2_to_ID[i]
-                      for i in df[keyfld].values if i in S2_to_ID.keys()]
-            df_update = pd.DataFrame(values_update, columns=df.columns)
-            df_update.insert(loc=0, column=tableID, value=df_ids)
-            self.setField(tablename, tableID, df_update.columns[1:].tolist(),
-                          df_update.values)
-
         if len(values_insert):
             print(f'Insert {len(values_insert)} values in {tablename}')
             df_insert = pd.DataFrame(values_insert, columns=df.columns)
-            self.insertInTable(
-                tablename, df_insert.columns.tolist(), df_insert.values)
+            self.insertInTable(tablename, df_insert.columns.tolist(),
+                               df_insert.values)
+
+        # Update previous values
+        if update:
+            values_update = list(
+                filter(lambda x: x[0] in keyintable, df.values))
+            if len(values_update):
+                print(f'Update {len(values_update)} values in {tablename}')
+                df_ids = [
+                    S2_to_ID[i] for i in df[keyfld].values
+                    if i in S2_to_ID.keys()
+                ]
+                df_update = pd.DataFrame(values_update, columns=df.columns)
+                df_update.insert(loc=0, column=tableID, value=df_ids)
+                self.setField(tablename, tableID,
+                              df_update.columns[1:].tolist(), df_update.values)
+
+        del S2_to_ID
 
         return
 
@@ -893,6 +950,63 @@ class BaseDMsql(object):
             print('Database dump only supported for MySQL databases')
 
         return
+
+    def findDuplicated(self, tablename, selectOptions, showDup=False):
+        """
+        Get duplicated entries in table.
+
+        Args:
+            tablename:      name of the table
+            selectOptions:  string with fields that will be retrieved
+            showDup:        if True, each repeated value will appear in different rows
+        """
+
+        options = selectOptions.split(',')
+        options = [opt.strip() for opt in options]
+        # Check table and options exist
+        if tablename in self.getTableNames():
+            opt = list(
+                filter(lambda x: x not in self.getColumnNames(tablename),
+                       options))
+            if opt:
+                print(
+                    f'Selected options \"{opt}\" not found in the selected table \"{tablename}\"'
+                )
+                return
+        else:
+            print(f'Table {tablename} not found.')
+            return
+
+        try:
+            if not showDup:
+                sqlQuery = f'SELECT *, COUNT(*) AS appearances FROM {tablename}\
+                            GROUP BY {selectOptions} HAVING appearances > 1'
+
+            else:
+                join = ' AND '.join(
+                    [f'dup.{opt}=orig.{opt}' for opt in options])
+                sqlQuery = f'WITH dup AS (\
+                                SELECT *, COUNT(*) appearances\
+                                FROM {tablename}\
+                                GROUP BY {selectOptions}\
+                                HAVING COUNT(*) > 1)\
+                            SELECT orig.*\
+                            FROM {tablename} orig\
+                                INNER JOIN dup ON {join}\
+                            ORDER BY orig.paperID1, orig.paperID2'
+
+            # This is to update the connection to changes by other
+            # processes.
+            self._conn.commit()
+
+            # Return the pandas dataframe. Note that numbers in text format
+            # are not converted to
+            return pd.read_sql(sqlQuery, con=self._conn, coerce_float=False)
+
+        except Exception as E:
+            print(str(E))
+            print('Error in query:', sqlQuery)
+            return
 
     def execute(self, sqlcmd):
         """
