@@ -109,7 +109,8 @@ def main(interface=False,
             selection = input()
 
             if selection == 'a':
-                df = DB.findDuplicated('citations', 'paperID1, paperID2')
+                # df = DB.findDuplicated('citations', 'paperID1, paperID2', showDup=True)
+                df = DB.findDuplicated('S2papers', 'S2paperID')
                 print(df)
 
             if selection == '1':

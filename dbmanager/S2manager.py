@@ -570,21 +570,41 @@ class S2manager(BaseDMsql):
 
         # A pass through all data files is needed to extract the data of interest
         # and fill in the tables
+        def normalize(data):
+            data = data.lower()
+            if len(data) > 0:
+                return data
+            return
 
         def process_Fields(paperEntry):
             """
             This function takes a dictionary with paper information as input
             and returns lists ready to insert in the corresponding tables
             """
-            fields_list = [[S2_to_ID[paperEntry['id']], fields_dict[el]]
-                           for el in paperEntry['fieldsOfStudy']]
-            journal_list = [[
-                S2_to_ID[paperEntry['id']],
-                journals_dict[paperEntry['journalName']]
-            ]]
-            venues_list = [[
-                S2_to_ID[paperEntry['id']], venues_dict[paperEntry['venue']]
-            ]]
+            fields_list = []
+            for el in paperEntry['fieldsOfStudy']:
+                try:
+                    fields_list.append([
+                        S2_to_ID[paperEntry['id']], fields_dict[normalize(el)]
+                    ])
+                except:
+                    pass
+
+            try:
+                journal_list = [[
+                    S2_to_ID[paperEntry['id']],
+                    journals_dict[normalize(paperEntry['journalName'])]
+                ]]
+            except:
+                journal_list = []
+
+            try:
+                venues_list = [[
+                    S2_to_ID[paperEntry['id']],
+                    venues_dict[normalize(paperEntry['venue'])]
+                ]]
+            except:
+                venues_list = []
 
             return fields_list, journal_list, venues_list
 
@@ -592,6 +612,7 @@ class S2manager(BaseDMsql):
             data_files + el for el in os.listdir(data_files)
             if el.startswith('s2-corpus')
         ])
+
         print('Filling in venue, journal and field of study data...\n')
         bar = tqdm(total=len(gz_files))
         for gzf in gz_files:
@@ -604,10 +625,10 @@ class S2manager(BaseDMsql):
                 lista_journals = []
                 lista_venues = []
                 for paper in papers_infile:
-                    try:
-                        all_lists = process_Fields(paper)
-                    except:
-                        all_lists = [[], [], []]
+                    # try:
+                    all_lists = process_Fields(paper)
+                    # except:
+                    #     all_lists = [[], [], []]
                     lista_fields += all_lists[0]
                     lista_journals += all_lists[1]
                     lista_venues += all_lists[2]

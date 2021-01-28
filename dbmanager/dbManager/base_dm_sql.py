@@ -985,6 +985,7 @@ class BaseDMsql(object):
             else:
                 join = ' AND '.join(
                     [f'dup.{opt}=orig.{opt}' for opt in options])
+                order = ' AND '.join([f'orig.{opt}' for opt in options])
                 sqlQuery = f'WITH dup AS (\
                                 SELECT *, COUNT(*) appearances\
                                 FROM {tablename}\
@@ -993,7 +994,7 @@ class BaseDMsql(object):
                             SELECT orig.*\
                             FROM {tablename} orig\
                                 INNER JOIN dup ON {join}\
-                            ORDER BY orig.paperID1, orig.paperID2'
+                            ORDER BY {order}'
 
             # This is to update the connection to changes by other
             # processes.
