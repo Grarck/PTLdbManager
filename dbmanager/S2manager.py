@@ -252,7 +252,8 @@ class S2manager(BaseDMsql):
                                 'journalPages', 'isDBLP', 'isMedline', 'doi',
                                 'doiUrl', 'pmid'
                             ])
-                        self.upsert('S2papers', 'S2paperID', 'paperID', df)
+                        self.upsert('S2papers', 'S2paperID', 'paperID', df,
+                                    chunksize)
 
                         all_venues += file_data[1]
                         all_journals += file_data[2]
@@ -287,7 +288,7 @@ class S2manager(BaseDMsql):
                                       'isDBLP', 'isMedline', 'doi', 'doiUrl',
                                       'pmid'
                                   ])
-                self.upsert('S2papers', 'S2paperID', 'paperID', df)
+                self.upsert('S2papers', 'S2paperID', 'paperID', df, chunksize)
 
                 all_venues += file_data[1]
                 all_journals += file_data[2]
@@ -301,11 +302,11 @@ class S2manager(BaseDMsql):
 
         print('Filling in tables S2venues, S2journals and S2fields')
         df = pd.DataFrame(all_venues, columns=['venueName'])
-        self.upsert('S2venues', 'venueName', 'venueID', df)
+        self.upsert('S2venues', 'venueName', 'venueID', df, chunksize)
         df = pd.DataFrame(all_journals, columns=['journalName'])
-        self.upsert('S2journals', 'journalName', 'journalID', df)
+        self.upsert('S2journals', 'journalName', 'journalID', df, chunksize)
         df = pd.DataFrame(all_fields, columns=['fieldName'])
-        self.upsert('S2fields', 'fieldName', 'fieldID', df)
+        self.upsert('S2fields', 'fieldName', 'fieldID', df, chunksize)
         # self.insertInTable('S2venues', 'venueName', [
         #                    [el] for el in all_venues])
         # self.insertInTable('S2journals', 'journalName', [
@@ -698,7 +699,7 @@ class S2manager(BaseDMsql):
         # We get rid of duplicates, keeping first element (max counts)
         df.drop_duplicates(subset='S2authorID', keep='first', inplace=True)
         self.upsert('S2authors', 'S2authorID', 'authorID',
-                    df[['S2authorID', 'name']])
+                    df[['S2authorID', 'name']], chunksize)
 
         # print()
         # bar = tqdm(total=len(gz_files))

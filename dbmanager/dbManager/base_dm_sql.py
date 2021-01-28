@@ -699,7 +699,14 @@ class BaseDMsql(object):
 
         return
 
-    def upsert(self, tablename, keyfld, tableID, df, robust=True, update=True):
+    def upsert(self,
+               tablename,
+               keyfld,
+               tableID,
+               df,
+               chunksize=100000,
+               robust=True,
+               update=True):
         """
         Update records of a DB table with the values in the df
         This function implements the following additional functionality:
@@ -768,7 +775,7 @@ class BaseDMsql(object):
         S2_to_ID = {}
         for df_DB in self.readDBchunks(tablename,
                                        tableID,
-                                       chunksize=100000,
+                                       chunksize=chunksize,
                                        selectOptions=f'{tableID}, {keyfld}',
                                        verbose=True):
             ID_to_S2_list = df_DB.values.tolist()
