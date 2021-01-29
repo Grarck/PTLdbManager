@@ -207,7 +207,7 @@ class S2manager(BaseDMsql):
         gz_files = sorted([
             data_files + el for el in os.listdir(data_files)
             if el.startswith('s2-corpus')
-        ])[17:]
+        ])[27:]
 
         # We sort data in alphabetical order and insert in table
         def normalize(data):
