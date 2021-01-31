@@ -115,14 +115,17 @@ def main(interface=False,
 
             if selection == '1':
                 # 2. If activated, remove and create again database tables
-                print(
-                    'Regenerating the database. Existing data will be removed.'
-                )
-                # The following method deletes all existing tables, and create them
-                # again without data.
-                DB.deleteDBtables()
-                DB.createDBschema()
-                # DB.createDBindices()
+                print('Previous info will be deleted. Continue?\n[y]/[n]')
+                selection = input()
+                if selection == 'y':
+                    print(
+                        'Regenerating the database. Existing data will be removed.'
+                    )
+                    # The following method deletes all existing tables, and create them
+                    # again without data.
+                    DB.deleteDBtables()
+                    DB.createDBschema()
+                    # DB.createDBindices()
             elif selection == '2':
                 # 3. If activated, authors and papers data
                 # will be imported from S2 data files
