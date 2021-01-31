@@ -97,14 +97,15 @@ def main(interface=False,
         while True:
             print('\nSelect option:')
             print('1. Reset database')
-            print('2. Import authors & papers from data files')
-            print('3. Import citations from data files')
+            print('2. Import papers from data files')
+            print('3. Import authors from data files')
+            print('4. Import citations from data files')
             print(
-                '4. Import journals, volumes & Fields of Study data from data files'
+                '5. Import journals, volumes & Fields of Study data from data files'
             )
-            print('5. Import authorship from data files')
-            print('6. Import entities of each paper from data files')
-            print('7. Extract lemmas for the imported papers')
+            print('6. Import authorship from data files')
+            print('7. Import entities of each paper from data files')
+            print('8. Extract lemmas for the imported papers')
             print('0. Quit')
             selection = input()
 
@@ -126,44 +127,42 @@ def main(interface=False,
                     DB.deleteDBtables()
                     DB.createDBschema()
                     # DB.createDBindices()
+            
             elif selection == '2':
                 # 3. If activated, authors and papers data
                 # will be imported from S2 data files
-                t0 = time.time()
                 print('Importing papers data ...')
                 DB.importPapers(data_files, ncpu, chunksize)
-                t1 = time.time()
-
-                print('Importing authors data ...')
-                DB.importAuthorsData(data_files, ncpu, chunksize)
-                t2 = time.time()
-                print(f'paper: {t1-t0}')
-                print(f'author: {t2-t1}')
-                print(f'total: {t2-t0}')
 
             elif selection == '3':
+                print('Importing authors data ...')
+                DB.importAuthorsData(data_files, ncpu, chunksize)
+
+            elif selection == '4':
                 # 4. If activated, citations data
                 # will be imported from S2 data files
                 print('Importing citations data ...')
-                t0 = time.time()
                 DB.importCitations(data_files, ncpu, chunksize)
-                print(f'Time: {time.time()-t0}')
-            elif selection == '4':
+
+            elif selection == '5':
                 # 5. If activated, journals, volumes, and Fields of Study data
                 # will be imported from S2 data files
                 print('Importing journal, volume and Fields of Study data ...')
                 DB.importFields(data_files, chunksize)
-            elif selection == '5':
+
+            elif selection == '6':
                 # 6. If activated, authorship data
                 # will be imported from S2 data files
                 print('Importing authorship data ...')
                 DB.importAuthors(data_files)
-            elif selection == '6':
+
+            elif selection == '7':
                 # 7. If activated, entities associated to each paper
                 # will be imported from S2 data files
                 print('Importing entities associated to each paper ...')
                 DB.importEntities(data_files)
-            elif selection == '7':
+
+            elif selection == '8':
                 ####################################################
                 # 8. If activated, will carry out lemmas extraction for the
                 # imported papers
