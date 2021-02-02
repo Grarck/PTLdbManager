@@ -110,9 +110,17 @@ def main(interface=False,
             selection = input()
 
             if selection == 'a':
-                # df = DB.findDuplicated('citations', 'paperID1, paperID2', showDup=True)
-                df = DB.findDuplicated('S2papers', 'S2paperID')
-                print(df)
+                tables = [
+                    'S2papers', 'S2authors', 'S2venues', 'S2journals',
+                    'S2fields'
+                ]
+                IDs = [
+                    'paperID', 'authorID', 'venueID', 'journalID', 'fieldID'
+                ]
+                for t, i in zip(tables, IDs):
+                    # df = DB.findDuplicated('citations', 'paperID1, paperID2', showDup=True)
+                    df = DB.findDuplicated(t, i)
+                    print(df)
 
             if selection == '1':
                 # 2. If activated, remove and create again database tables
@@ -127,7 +135,7 @@ def main(interface=False,
                     DB.deleteDBtables()
                     DB.createDBschema()
                     # DB.createDBindices()
-            
+
             elif selection == '2':
                 # 3. If activated, authors and papers data
                 # will be imported from S2 data files

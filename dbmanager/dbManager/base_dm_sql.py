@@ -704,6 +704,7 @@ class BaseDMsql(object):
                keyfld,
                tableID,
                df,
+               S2_to_ID={},
                chunksize=100000,
                robust=True,
                update=True):
@@ -772,16 +773,26 @@ class BaseDMsql(object):
         # records that need to be inserted
 
         # Get existing IDs in table
-        S2_to_ID = {}
-        for df_DB in self.readDBchunks(tablename,
-                                       tableID,
-                                       chunksize=chunksize,
-                                       selectOptions=f'{tableID}, {keyfld}',
-                                       verbose=True):
-            ID_to_S2_list = df_DB.values.tolist()
-            S2_to_ID_list = [[el[1], el[0]] for el in ID_to_S2_list]
-            aux_dict = dict(S2_to_ID_list)
-            S2_to_ID = {**S2_to_ID, **aux_dict}
+        # S2_to_ID = {}
+        # for df_DB in self.readDBchunks(tablename,
+        #                                tableID,
+        #                                chunksize=chunksize,
+        #                                selectOptions=f'{tableID}, {keyfld}',
+        #                                verbose=False):
+        #     ID_to_S2_list = df_DB.values.tolist()
+        #     S2_to_ID_list = [[el[1], el[0]] for el in ID_to_S2_list]
+        #     aux_dict = dict(S2_to_ID_list)
+        #     S2_to_ID = {**S2_to_ID, **aux_dict}
+        if S2_to_ID:
+            min_value = S2_to_ID[list(S2_to_ID.keys())[-1]]
+        else:
+            min_value = 0
+        aux_dict = self.S22ID(tablename,
+                              keyfld,
+                              tableID,
+                              min_value=min_value,
+                              chunksize=chunksize)
+        S2_to_ID = {**S2_to_ID, **aux_dict}
         keyintable = S2_to_ID.keys()
 
         # Insert new values
@@ -1015,6 +1026,38 @@ class BaseDMsql(object):
             print(str(E))
             print('Error in query:', sqlQuery)
             return
+
+    def S22ID(self, tablename, keyfld, tableID, min_value=0, chunksize=100000):
+        """
+        Create a dictionary S2ID - tableID
+        
+        Args:
+            tablename:  Table that will be modified
+            keyfld:     string with the column name that will be used as key
+                        MUST be unique value
+                        (e.g. 'S2paperID')
+            tableID:    string with the column name of unique identifier
+                        (e.g. 'paperID')
+
+        """
+
+        # Next we need to start from last retrieved element
+        filterOptions = tableID + '>' + str(min_value)
+
+        # Get existing IDs in table
+        S2_to_ID = {}
+        for df_DB in self.readDBchunks(tablename,
+                                       tableID,
+                                       chunksize=chunksize,
+                                       selectOptions=f'{tableID}, {keyfld}',
+                                       filterOptions=filterOptions,
+                                       verbose=True):
+            ID_to_S2_list = df_DB.values.tolist()
+            S2_to_ID_list = [[el[1], el[0]] for el in ID_to_S2_list]
+            aux_dict = dict(S2_to_ID_list)
+            S2_to_ID = {**S2_to_ID, **aux_dict}
+
+        return S2_to_ID
 
     def execute(self, sqlcmd):
         """
