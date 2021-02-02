@@ -207,7 +207,7 @@ class S2manager(BaseDMsql):
         gz_files = sorted([
             data_files + el for el in os.listdir(data_files)
             if el.startswith('s2-corpus')
-        ])[156:]
+        ])[163:]
 
         # We sort data in alphabetical order and insert in table
         def normalize(data):
@@ -225,24 +225,6 @@ class S2manager(BaseDMsql):
                         print()
                         pbar.update()
                         # Populate tables with the new data
-                        # TODO: UPSERT
-                        # self.insertInTable('S2papers', [
-                        #     'S2paperID', 'title', 'lowertitle',
-                        #     'paperAbstract', 'entities', 'fieldsOfStudy',
-                        #     's2PdfUrl', 'pdfUrls', 'year', 'journalVolume',
-                        #     'journalPages', 'isDBLP', 'isMedline', 'doi',
-                        #     'doiUrl', 'pmid'
-                        # ],
-                        #                    file_data[0],
-                        #                    chunksize=chunksize,
-                        #                    verbose=False)
-                        # all_venues += file_data[1]
-                        # all_venues = list(set(all_venues))
-                        # all_journals += file_data[2]
-                        # all_journals = list(set(all_journals))
-                        # all_fields += file_data[3]
-                        # all_fields = list(set(all_fields))
-
                         df = pd.DataFrame(
                             file_data[0],
                             columns=[
@@ -259,6 +241,14 @@ class S2manager(BaseDMsql):
                         all_journals += file_data[2]
                         all_fields += file_data[3]
 
+                        print('Filling in tables S2venues, S2journals and S2fields')
+                        df = pd.DataFrame(all_venues, columns=['venueName'])
+                        self.upsert('S2venues', 'venueName', 'venueID', df, chunksize)
+                        df = pd.DataFrame(all_journals, columns=['journalName'])
+                        self.upsert('S2journals', 'journalName', 'journalID', df, chunksize)
+                        df = pd.DataFrame(all_fields, columns=['fieldName'])
+                        self.upsert('S2fields', 'fieldName', 'fieldID', df, chunksize)
+
             pbar.close()
             p.close()
             p.join()
@@ -274,11 +264,6 @@ class S2manager(BaseDMsql):
                 file_data = process_paperFile(gzf)
 
                 # Populate tables with the new data
-                # self.insertInTable('S2papers', ['S2paperID', 'title', 'lowertitle',
-                #                                 'paperAbstract', 'entities', 'fieldsOfStudy', 's2PdfUrl',
-                #                                 'pdfUrls', 'year', 'journalVolume', 'journalPages',
-                #                                 'isDBLP', 'isMedline', 'doi', 'doiUrl', 'pmid'],
-                #                    file_data[0], chunksize=chunksize, verbose=False)
                 df = pd.DataFrame(file_data[0],
                                   columns=[
                                       'S2paperID', 'title', 'lowertitle',
@@ -294,19 +279,27 @@ class S2manager(BaseDMsql):
                 all_journals += file_data[2]
                 all_fields += file_data[3]
 
+                print('Filling in tables S2venues, S2journals and S2fields')
+                df = pd.DataFrame(all_venues, columns=['venueName'])
+                self.upsert('S2venues', 'venueName', 'venueID', df, chunksize)
+                df = pd.DataFrame(all_journals, columns=['journalName'])
+                self.upsert('S2journals', 'journalName', 'journalID', df, chunksize)
+                df = pd.DataFrame(all_fields, columns=['fieldName'])
+                self.upsert('S2fields', 'fieldName', 'fieldID', df, chunksize)
+
             pbar.close()
 
-        all_venues = normalize(all_venues)
-        all_journals = normalize(all_journals)
-        all_fields = normalize(all_fields)
+        # all_venues = normalize(all_venues)
+        # all_journals = normalize(all_journals)
+        # all_fields = normalize(all_fields)
 
-        print('Filling in tables S2venues, S2journals and S2fields')
-        df = pd.DataFrame(all_venues, columns=['venueName'])
-        self.upsert('S2venues', 'venueName', 'venueID', df, chunksize)
-        df = pd.DataFrame(all_journals, columns=['journalName'])
-        self.upsert('S2journals', 'journalName', 'journalID', df, chunksize)
-        df = pd.DataFrame(all_fields, columns=['fieldName'])
-        self.upsert('S2fields', 'fieldName', 'fieldID', df, chunksize)
+        # print('Filling in tables S2venues, S2journals and S2fields')
+        # df = pd.DataFrame(all_venues, columns=['venueName'])
+        # self.upsert('S2venues', 'venueName', 'venueID', df, chunksize)
+        # df = pd.DataFrame(all_journals, columns=['journalName'])
+        # self.upsert('S2journals', 'journalName', 'journalID', df, chunksize)
+        # df = pd.DataFrame(all_fields, columns=['fieldName'])
+        # self.upsert('S2fields', 'fieldName', 'fieldID', df, chunksize)
         # self.insertInTable('S2venues', 'venueName', [
         #                    [el] for el in all_venues])
         # self.insertInTable('S2journals', 'journalName', [
