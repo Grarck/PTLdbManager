@@ -207,7 +207,7 @@ class S2manager(BaseDMsql):
         gz_files = sorted([
             data_files + el for el in os.listdir(data_files)
             if el.startswith('s2-corpus')
-        ])
+        ])[38:]
         # [163:]
         S2_to_ID = self.S22ID('S2papers',
                               'S2paperID',
