@@ -207,8 +207,8 @@ class S2manager(BaseDMsql):
         gz_files = sorted([
             data_files + el for el in os.listdir(data_files)
             if el.startswith('s2-corpus')
-        ])[118:]
-        # [163:]
+        ])
+
         S2_to_ID = self.S22ID('S2papers',
                               'S2paperID',
                               'paperID',
@@ -229,6 +229,20 @@ class S2manager(BaseDMsql):
                     for file_data in p.imap(process_paperFile, gz_files):
                         print()
                         pbar.update()
+
+                        #Update dictionary
+                        if S2_to_ID:
+                            min_value = S2_to_ID[list(S2_to_ID.keys())[-1]]
+                        else:
+                            min_value = 0
+                        aux_dict = self.S22ID('S2papers',
+                                              'S2paperID',
+                                              'paperID',
+                                              min_value=min_value,
+                                              chunksize=chunksize)
+                        S2_to_ID = {**S2_to_ID, **aux_dict}
+                        del aux_dict
+
                         # Populate tables with the new data
                         df = pd.DataFrame(
                             file_data[0],
@@ -288,6 +302,19 @@ class S2manager(BaseDMsql):
 
             for gzf in gz_files:
                 pbar.update(1)
+
+                #Update dictionary
+                if S2_to_ID:
+                    min_value = S2_to_ID[list(S2_to_ID.keys())[-1]]
+                else:
+                    min_value = 0
+                aux_dict = self.S22ID('S2papers',
+                                      'S2paperID',
+                                      'paperID',
+                                      min_value=min_value,
+                                      chunksize=chunksize)
+                S2_to_ID = {**S2_to_ID, **aux_dict}
+                del aux_dict
 
                 file_data = process_paperFile(gzf)
 
@@ -383,24 +410,6 @@ class S2manager(BaseDMsql):
             S2_to_ID = {**S2_to_ID, **aux_dict}
         del df
 
-        # # Get existing citations in database
-        # citations = []
-        # columns = ['citationID', 'paperID1', 'paperID2']
-        # try:
-        #     citations_DBdf = pd.concat([
-        #         df_DB for df_DB in self.readDBchunks(
-        #             'citations',
-        #             'citationID',
-        #             chunksize=chunksize,
-        #             selectOptions='citationID, paperID1, paperID2',
-        #             verbose=True)
-        #     ],
-        #                                ignore_index=True)
-        # except:
-        #     citations_DBdf = pd.DataFrame(columns=columns)
-        # print(f'CITATIONS DB:\n{citations_DBdf[columns[1:]]}')
-
-        print('Filling in table S2papers')
         # Read files
         gz_files = sorted([
             data_files + el for el in os.listdir(data_files)
@@ -448,19 +457,13 @@ class S2manager(BaseDMsql):
         new_citations.columns = ['paperID1', 'paperID2']
 
         del citations_fdf
-        print(f'NEW CITATIONS:\n{new_citations}')
 
         print('Filling in citations...\n')
         bar = tqdm(total=len(gz_files))
-        # # Keep new values
-        # result = pd.merge(citations_DBdf[['paperID1', 'paperID2']],
-        #                   new_citations,
-        #                   how='right')
-        # print(f'RESULT:\n {result}')
 
         # Delete from table previous information of papers
         delete = [[val] for val in new_citations['paperID1'].values]
-        print(delete)
+
         self.deleteFromTable('citations',
                              'paperID1',
                              delete,
@@ -471,29 +474,6 @@ class S2manager(BaseDMsql):
                            new_citations.values,
                            chunksize=chunksize,
                            verbose=True)
-        # for gzf in gz_files:
-        #     bar.update(1)
-        #     with gzip.open(gzf, 'rt', encoding='utf8') as f:
-        #         papers_infile = f.read().replace('}\n{', '},{')
-        #         papers_infile = json.loads('[' + papers_infile + ']')
-
-        #         lista_citas = []
-        #         for paper in papers_infile:
-        #             lista_citas += process_Citations(paper)
-
-        #         # Populate table with the new data
-        #         # self.insertInTable('citations', [
-        #         #                    'paperID1', 'paperID2'], lista_citas, chunksize=chunksize, verbose=True)
-
-        #         values_insert = list(
-        #             filter(lambda x: x not in citations, lista_citas))
-        #         # values_update = list(
-        #         #     filter(lambda x: x[0] in keyintable, df.values))
-        #         if len(values_insert) > 0:
-        #             self.insertInTable('citations', ['paperID1', 'paperID2'],
-        #                                values_insert,
-        #                                chunksize=chunksize,
-        #                                verbose=True)
 
         bar.close()
 
@@ -703,88 +683,74 @@ class S2manager(BaseDMsql):
             data_files + el for el in os.listdir(data_files)
             if el.startswith('s2-corpus')
         ]
-        S2_to_ID = self.S22ID('S2authors',
-                              'S2authorID',
-                              'authorID',
-                              chunksize=chunksize)
+        # S2_to_ID = self.S22ID('S2authors',
+        #                       'S2authorID',
+        #                       'authorID',
+        #                       chunksize=chunksize)
+        S2_to_ID = {}
 
-        author_counts = []
+        def chunks(l, n):
+            '''Yields successive n-sized chunks from list l.'''
+            for i in range(0, len(l), n):
+                yield l[i:i + n]
 
-        if ncpu:
-            # Parallel processing
-            with Pool(ncpu) as p:
-                with tqdm(total=len(gz_files)) as pbar:
-                    for thisfile_authors in p.imap(process_Authors, gz_files):
-                        print()
-                        pbar.update()
-                        author_counts += thisfile_authors
+        for gz_chunk in chunks(gz_files, 10):
+            author_counts = []
+            #Update dictionary
+            if S2_to_ID:
+                min_value = S2_to_ID[list(S2_to_ID.keys())[-1]]
+            else:
+                min_value = 0
+            aux_dict = self.S22ID('S2authors',
+                                  'S2authorID',
+                                  'authorID',
+                                  min_value=min_value,
+                                  chunksize=chunksize)
+            S2_to_ID = {**S2_to_ID, **aux_dict}
+            del aux_dict
 
-            pbar.close()
-            p.close()
-            p.join()
+            if ncpu:
+                # Parallel processing
+                with Pool(ncpu) as p:
+                    with tqdm(total=len(gz_chunk)) as pbar:
+                        for thisfile_authors in p.imap(process_Authors,
+                                                       gz_chunk):
+                            print()
+                            pbar.update()
+                            author_counts += thisfile_authors
 
-        else:
-            print()
-            pbar = tqdm(total=len(gz_files))
-            pbar.clear()
+                pbar.close()
+                p.close()
+                p.join()
 
-            for gzf in gz_files:
-                pbar.update(1)
-                author_counts += process_Authors(gzf)
+            else:
+                print()
+                pbar = tqdm(total=len(gz_chunk))
+                pbar.clear()
 
-        author_counts = Counter(author_counts)
-        # We insert author data in table but we need to get rid of duplicated ids
-        id_name_count = [[el[0], el[1], author_counts[el]]
-                         for el in author_counts]
-        df = pd.DataFrame(id_name_count,
-                          columns=['S2authorID', 'name', 'counts'])
-        # sort according to 'id' and then by 'counts'
-        df.sort_values(by=['S2authorID', 'counts'],
-                       ascending=False,
-                       inplace=True)
-        # We get rid of duplicates, keeping first element (max counts)
-        df.drop_duplicates(subset='S2authorID', keep='first', inplace=True)
-        self.upsert('S2authors',
-                    'S2authorID',
-                    'authorID',
-                    df[['S2authorID', 'name']],
-                    S2_to_ID=S2_to_ID,
-                    chunksize=chunksize,
-                    update=False)
+                for gzf in gz_chunk:
+                    pbar.update(1)
+                    author_counts += process_Authors(gzf)
 
-        # print()
-        # bar = tqdm(total=len(gz_files))
-        # author_counts = []
-        # for fileno, gzf in enumerate(gz_files):
-        #     bar.update(1)
-        #     with gzip.open(gzf, 'rt', encoding='utf8') as f:
-        #         papers_infile = f.read().replace('}\n{', '},{')
-        #         papers_infile = json.loads('[' + papers_infile + ']')
-
-        #         thisfile_authors = []
-        #         for el in papers_infile:
-        #             if len(el['authors']):
-        #                 for author in el['authors']:
-        #                     if len(author['ids']):
-        #                         thisfile_authors.append(
-        #                             (int(author['ids'][0]), author['name']))
-        #         # author_counts = author_counts + Counter(thisfile_authors)
-        #         author_counts = author_counts + thisfile_authors
-
-        # author_counts = Counter(author_counts)
-        # # We insert author data in table but we need to get rid of duplicated ids
-        # id_name_count = [[el[0], el[1], author_counts[el]]
-        #                  for el in author_counts]
-        # df = pd.DataFrame(id_name_count,
-        #                   columns=['S2authorID', 'name', 'counts'])
-        # # sort according to 'id' and then by 'counts'
-        # df.sort_values(by=['S2authorID', 'counts'],
-        #                ascending=False,
-        #                inplace=True)
-        # # We get rid of duplicates, keeping first element (max counts)
-        # df.drop_duplicates(subset='S2authorID', keep='first', inplace=True)
-        # self.upsert('S2authors', 'S2authorID', 'authorID',
-        #             df[['S2authorID', 'name']])
+            author_counts = Counter(author_counts)
+            # We insert author data in table but we need to get rid of duplicated ids
+            id_name_count = [[el[0], el[1], author_counts[el]]
+                             for el in author_counts]
+            df = pd.DataFrame(id_name_count,
+                              columns=['S2authorID', 'name', 'counts'])
+            # sort according to 'id' and then by 'counts'
+            df.sort_values(by=['S2authorID', 'counts'],
+                           ascending=False,
+                           inplace=True)
+            # We get rid of duplicates, keeping first element (max counts)
+            df.drop_duplicates(subset='S2authorID', keep='first', inplace=True)
+            self.upsert('S2authors',
+                        'S2authorID',
+                        'authorID',
+                        df[['S2authorID', 'name']],
+                        S2_to_ID=S2_to_ID,
+                        chunksize=chunksize,
+                        update=False)
 
     def importAuthors(self, data_files):
         """Imports Authorship information (paper-author data)"""
