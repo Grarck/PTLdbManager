@@ -140,12 +140,15 @@ def main(interface=False,
                 # 3. If activated, authors and papers data
                 # will be imported from S2 data files
                 print('Importing papers data ...')
+                t0 = time.time()
                 DB.importPapers(data_files, ncpu, chunksize)
+                print(f'\nTotal time: {time.time()-t0}')
 
             elif selection == '3':
                 print('Importing authors data ...')
+                t0 = time.time()
                 DB.importAuthorsData(data_files, ncpu, chunksize)
-
+                print(f'\nTotal time: {time.time()-t0}')
             elif selection == '4':
                 # 4. If activated, citations data
                 # will be imported from S2 data files

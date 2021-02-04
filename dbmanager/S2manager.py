@@ -213,6 +213,18 @@ class S2manager(BaseDMsql):
                               'S2paperID',
                               'paperID',
                               chunksize=chunksize)
+        venue_dict = self.S22ID('S2venues',
+                                'venueName',
+                                'venueID',
+                                chunksize=chunksize)
+        journal_dict = self.S22ID('S2journals',
+                                  'journalName',
+                                  'journalID',
+                                  chunksize=chunksize)
+        field_dict = self.S22ID('S2fields',
+                                'fieldName',
+                                'fieldID',
+                                chunksize=chunksize)
 
         # We sort data in alphabetical order and insert in table
         def normalize(data):
@@ -241,6 +253,40 @@ class S2manager(BaseDMsql):
                                               min_value=min_value,
                                               chunksize=chunksize)
                         S2_to_ID = {**S2_to_ID, **aux_dict}
+
+                        if venue_dict:
+                            min_value = venue_dict[list(venue_dict.keys())[-1]]
+                        else:
+                            min_value = 0
+                        aux_dict = self.S22ID('S2venues',
+                                              'venueName',
+                                              'venueID',
+                                              min_value=min_value,
+                                              chunksize=chunksize)
+                        venue_dict = {**venue_dict, **aux_dict}
+
+                        if journal_dict:
+                            min_value = journal_dict[list(
+                                journal_dict.keys())[-1]]
+                        else:
+                            min_value = 0
+                        aux_dict = self.S22ID('S2journals',
+                                              'journalName',
+                                              'journalID',
+                                              min_value=min_value,
+                                              chunksize=chunksize)
+                        journal_dict = {**journal_dict, **aux_dict}
+
+                        if field_dict:
+                            min_value = field_dict[list(field_dict.keys())[-1]]
+                        else:
+                            min_value = 0
+                        aux_dict = self.S22ID('S2fields',
+                                              'fieldName',
+                                              'fieldID',
+                                              min_value=min_value,
+                                              chunksize=chunksize)
+                        field_dict = {**field_dict, **aux_dict}
                         del aux_dict
 
                         # Populate tables with the new data
@@ -273,6 +319,7 @@ class S2manager(BaseDMsql):
                                     'venueName',
                                     'venueID',
                                     df,
+                                    S2_to_ID=venue_dict,
                                     chunksize=chunksize,
                                     update=False)
                         df = pd.DataFrame(all_journals,
@@ -281,6 +328,7 @@ class S2manager(BaseDMsql):
                                     'journalName',
                                     'journalID',
                                     df,
+                                    S2_to_ID=journal_dict,
                                     chunksize=chunksize,
                                     update=False)
                         df = pd.DataFrame(all_fields, columns=['fieldName'])
@@ -288,6 +336,7 @@ class S2manager(BaseDMsql):
                                     'fieldName',
                                     'fieldID',
                                     df,
+                                    S2_to_ID=field_dict,
                                     chunksize=chunksize,
                                     update=False)
 
@@ -314,6 +363,39 @@ class S2manager(BaseDMsql):
                                       min_value=min_value,
                                       chunksize=chunksize)
                 S2_to_ID = {**S2_to_ID, **aux_dict}
+
+                if venue_dict:
+                    min_value = venue_dict[list(venue_dict.keys())[-1]]
+                else:
+                    min_value = 0
+                aux_dict = self.S22ID('S2venues',
+                                      'venueName',
+                                      'venueID',
+                                      min_value=min_value,
+                                      chunksize=chunksize)
+                venue_dict = {**venue_dict, **aux_dict}
+
+                if journal_dict:
+                    min_value = journal_dict[list(journal_dict.keys())[-1]]
+                else:
+                    min_value = 0
+                aux_dict = self.S22ID('S2journals',
+                                      'journalName',
+                                      'journalID',
+                                      min_value=min_value,
+                                      chunksize=chunksize)
+                journal_dict = {**journal_dict, **aux_dict}
+
+                if field_dict:
+                    min_value = field_dict[list(field_dict.keys())[-1]]
+                else:
+                    min_value = 0
+                aux_dict = self.S22ID('S2fields',
+                                      'fieldName',
+                                      'fieldID',
+                                      min_value=min_value,
+                                      chunksize=chunksize)
+                field_dict = {**field_dict, **aux_dict}
                 del aux_dict
 
                 file_data = process_paperFile(gzf)
@@ -346,6 +428,7 @@ class S2manager(BaseDMsql):
                             'venueName',
                             'venueID',
                             df,
+                            S2_to_ID=venue_dict,
                             chunksize=chunksize,
                             update=False)
                 df = pd.DataFrame(all_journals, columns=['journalName'])
@@ -353,6 +436,7 @@ class S2manager(BaseDMsql):
                             'journalName',
                             'journalID',
                             df,
+                            S2_to_ID=journal_dict,
                             chunksize=chunksize,
                             update=False)
                 df = pd.DataFrame(all_fields, columns=['fieldName'])
@@ -360,6 +444,7 @@ class S2manager(BaseDMsql):
                             'fieldName',
                             'fieldID',
                             df,
+                            S2_to_ID=field_dict,
                             chunksize=chunksize,
                             update=False)
 
