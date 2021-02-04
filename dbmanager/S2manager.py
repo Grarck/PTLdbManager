@@ -579,22 +579,15 @@ class S2manager(BaseDMsql):
         # corresponding to each S2paperID
         print('Generating S2 to ID dictionary')
 
-        S2_to_ID = {}
-
-        for df in self.readDBchunks('S2papers',
-                                    'paperID',
-                                    chunksize=chunksize,
-                                    selectOptions='paperID, S2paperID',
-                                    verbose=True):
-            ID_to_S2_list = df.values.tolist()
-            S2_to_ID_list = [[el[1], el[0]] for el in ID_to_S2_list]
-            aux_dict = dict(S2_to_ID_list)
-            S2_to_ID = {**S2_to_ID, **aux_dict}
+        S2_to_ID = self.S22ID('S2papers',
+                              'S2paperID',
+                              'paperID',
+                              chunksize=chunksize)
 
         # A pass through all data files is needed to extract the data of interest
         # and fill in the tables
         def normalize(data):
-            data = data.lower()
+            # data = data.lower()
             if len(data) > 0:
                 return data
             return
@@ -638,7 +631,7 @@ class S2manager(BaseDMsql):
 
         print('Filling in venue, journal and field of study data...\n')
         bar = tqdm(total=len(gz_files))
-        for gzf in gz_files:
+        for gzf in gz_files[22:]:
             bar.update(1)
             with gzip.open(gzf, 'rt', encoding='utf8') as f:
                 papers_infile = f.read().replace('}\n{', '},{')
@@ -656,19 +649,47 @@ class S2manager(BaseDMsql):
                     lista_journals += all_lists[1]
                     lista_venues += all_lists[2]
 
-                # Populate tables
-                self.insertInTable('paperField', ['paperID', 'fieldID'],
-                                   lista_fields,
-                                   chunksize=chunksize,
-                                   verbose=True)
-                self.insertInTable('paperVenue', ['paperID', 'venueID'],
-                                   lista_venues,
-                                   chunksize=chunksize,
-                                   verbose=True)
-                self.insertInTable('paperJournal', ['paperID', 'journalID'],
-                                   lista_journals,
-                                   chunksize=chunksize,
-                                   verbose=True)
+                print(len(lista_fields), len(lista_journals),
+                      len(lista_venues))
+                # Delete from table previous information of papers
+                # and insert updated info
+                # FIELDS
+                if len(lista_fields):
+                    paper, _ = zip(*lista_fields)
+                    delete = [[k] for k in set(paper)]
+                    self.deleteFromTable('paperField',
+                                         'paperID',
+                                         delete,
+                                         chunksize=chunksize)
+                    self.insertInTable('paperField', ['paperID', 'fieldID'],
+                                       lista_fields,
+                                       chunksize=chunksize,
+                                       verbose=True)
+                # VENUES
+                if len(lista_venues):
+                    paper, _ = zip(*lista_venues)
+                    delete = [[k] for k in set(paper)]
+                    self.deleteFromTable('paperVenue',
+                                         'paperID',
+                                         delete,
+                                         chunksize=chunksize)
+                    self.insertInTable('paperVenue', ['paperID', 'venueID'],
+                                       lista_venues,
+                                       chunksize=chunksize,
+                                       verbose=True)
+                # JOURNALS
+                if len(lista_journals):
+                    paper, _ = zip(*lista_journals)
+                    delete = [[k] for k in set(paper)]
+                    self.deleteFromTable('paperJournal',
+                                         'paperID',
+                                         delete,
+                                         chunksize=chunksize)
+                    self.insertInTable('paperJournal',
+                                       ['paperID', 'journalID'],
+                                       lista_journals,
+                                       chunksize=chunksize,
+                                       verbose=True)
         bar.close()
 
         del S2_to_ID
