@@ -754,7 +754,7 @@ class BaseDMsql(object):
         flds = [keyfld] + [x for x in df.columns if x != keyfld]
         df = df[flds]
         # Remove nan values
-        df = df.replace(np.nan, None)
+        df = df.where(pd.notnull(df), None)
 
         if robust:
             # Create new columns if necessary
