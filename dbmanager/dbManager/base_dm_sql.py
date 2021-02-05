@@ -783,16 +783,17 @@ class BaseDMsql(object):
         #     S2_to_ID_list = [[el[1], el[0]] for el in ID_to_S2_list]
         #     aux_dict = dict(S2_to_ID_list)
         #     S2_to_ID = {**S2_to_ID, **aux_dict}
-        if S2_to_ID:
-            min_value = S2_to_ID[list(S2_to_ID.keys())[-1]]
-        else:
-            min_value = 0
-        aux_dict = self.S22ID(tablename,
-                              keyfld,
-                              tableID,
-                              min_value=min_value,
-                              chunksize=chunksize)
-        S2_to_ID = {**S2_to_ID, **aux_dict}
+        # t0 = time.time()
+        # if S2_to_ID:
+        #     min_value = S2_to_ID[list(S2_to_ID.keys())[-1]]
+        # else:
+        #     min_value = 0
+        # aux_dict = self.S22ID(tablename,
+        #                       keyfld,
+        #                       tableID,
+        #                       min_value=min_value,
+        #                       chunksize=chunksize)
+        # S2_to_ID = {**S2_to_ID, **aux_dict}
         keyintable = S2_to_ID.keys()
 
         # Insert new values
