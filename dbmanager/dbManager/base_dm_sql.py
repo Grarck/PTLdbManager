@@ -707,7 +707,7 @@ class BaseDMsql(object):
                S2_to_ID={},
                chunksize=100000,
                robust=True,
-               update=True):
+               update=False):
         """
         Update records of a DB table with the values in the df
         This function implements the following additional functionality:

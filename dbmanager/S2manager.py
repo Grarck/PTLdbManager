@@ -187,7 +187,7 @@ class S2manager(BaseDMsql):
 
         return
 
-    def importPapers(self, data_files, ncpu, chunksize=100000):
+    def importPapers(self, data_files, ncpu, chunksize=100000, update=False):
         """
         Import data from Semantic Scholar compressed data files
         available at the indicated location
@@ -243,51 +243,54 @@ class S2manager(BaseDMsql):
                         pbar.update()
 
                         #Update dictionary
-                        if S2_to_ID:
-                            min_value = S2_to_ID[list(S2_to_ID.keys())[-1]]
-                        else:
-                            min_value = 0
-                        aux_dict = self.S22ID('S2papers',
-                                              'S2paperID',
-                                              'paperID',
-                                              min_value=min_value,
-                                              chunksize=chunksize)
-                        S2_to_ID = {**S2_to_ID, **aux_dict}
+                        if update:
+                            if S2_to_ID:
+                                min_value = S2_to_ID[list(S2_to_ID.keys())[-1]]
+                            else:
+                                min_value = 0
+                            aux_dict = self.S22ID('S2papers',
+                                                  'S2paperID',
+                                                  'paperID',
+                                                  min_value=min_value,
+                                                  chunksize=chunksize)
+                            S2_to_ID = {**S2_to_ID, **aux_dict}
 
-                        if venue_dict:
-                            min_value = venue_dict[list(venue_dict.keys())[-1]]
-                        else:
-                            min_value = 0
-                        aux_dict = self.S22ID('S2venues',
-                                              'venueName',
-                                              'venueID',
-                                              min_value=min_value,
-                                              chunksize=chunksize)
-                        venue_dict = {**venue_dict, **aux_dict}
+                            if venue_dict:
+                                min_value = venue_dict[list(
+                                    venue_dict.keys())[-1]]
+                            else:
+                                min_value = 0
+                            aux_dict = self.S22ID('S2venues',
+                                                  'venueName',
+                                                  'venueID',
+                                                  min_value=min_value,
+                                                  chunksize=chunksize)
+                            venue_dict = {**venue_dict, **aux_dict}
 
-                        if journal_dict:
-                            min_value = journal_dict[list(
-                                journal_dict.keys())[-1]]
-                        else:
-                            min_value = 0
-                        aux_dict = self.S22ID('S2journals',
-                                              'journalName',
-                                              'journalID',
-                                              min_value=min_value,
-                                              chunksize=chunksize)
-                        journal_dict = {**journal_dict, **aux_dict}
+                            if journal_dict:
+                                min_value = journal_dict[list(
+                                    journal_dict.keys())[-1]]
+                            else:
+                                min_value = 0
+                            aux_dict = self.S22ID('S2journals',
+                                                  'journalName',
+                                                  'journalID',
+                                                  min_value=min_value,
+                                                  chunksize=chunksize)
+                            journal_dict = {**journal_dict, **aux_dict}
 
-                        if field_dict:
-                            min_value = field_dict[list(field_dict.keys())[-1]]
-                        else:
-                            min_value = 0
-                        aux_dict = self.S22ID('S2fields',
-                                              'fieldName',
-                                              'fieldID',
-                                              min_value=min_value,
-                                              chunksize=chunksize)
-                        field_dict = {**field_dict, **aux_dict}
-                        del aux_dict
+                            if field_dict:
+                                min_value = field_dict[list(
+                                    field_dict.keys())[-1]]
+                            else:
+                                min_value = 0
+                            aux_dict = self.S22ID('S2fields',
+                                                  'fieldName',
+                                                  'fieldID',
+                                                  min_value=min_value,
+                                                  chunksize=chunksize)
+                            field_dict = {**field_dict, **aux_dict}
+                            del aux_dict
 
                         # Populate tables with the new data
                         df = pd.DataFrame(
@@ -305,7 +308,7 @@ class S2manager(BaseDMsql):
                                     df,
                                     S2_to_ID=S2_to_ID,
                                     chunksize=chunksize,
-                                    update=False)
+                                    update=update)
 
                         all_venues = file_data[1]
                         all_journals = file_data[2]
@@ -321,7 +324,7 @@ class S2manager(BaseDMsql):
                                     df,
                                     S2_to_ID=venue_dict,
                                     chunksize=chunksize,
-                                    update=False)
+                                    update=update)
                         df = pd.DataFrame(all_journals,
                                           columns=['journalName'])
                         self.upsert('S2journals',
@@ -330,7 +333,7 @@ class S2manager(BaseDMsql):
                                     df,
                                     S2_to_ID=journal_dict,
                                     chunksize=chunksize,
-                                    update=False)
+                                    update=update)
                         df = pd.DataFrame(all_fields, columns=['fieldName'])
                         self.upsert('S2fields',
                                     'fieldName',
@@ -338,7 +341,7 @@ class S2manager(BaseDMsql):
                                     df,
                                     S2_to_ID=field_dict,
                                     chunksize=chunksize,
-                                    update=False)
+                                    update=update)
 
             pbar.close()
             p.close()
@@ -353,50 +356,51 @@ class S2manager(BaseDMsql):
                 pbar.update(1)
 
                 #Update dictionary
-                if S2_to_ID:
-                    min_value = S2_to_ID[list(S2_to_ID.keys())[-1]]
-                else:
-                    min_value = 0
-                aux_dict = self.S22ID('S2papers',
-                                      'S2paperID',
-                                      'paperID',
-                                      min_value=min_value,
-                                      chunksize=chunksize)
-                S2_to_ID = {**S2_to_ID, **aux_dict}
+                if update:
+                    if S2_to_ID:
+                        min_value = S2_to_ID[list(S2_to_ID.keys())[-1]]
+                    else:
+                        min_value = 0
+                    aux_dict = self.S22ID('S2papers',
+                                          'S2paperID',
+                                          'paperID',
+                                          min_value=min_value,
+                                          chunksize=chunksize)
+                    S2_to_ID = {**S2_to_ID, **aux_dict}
 
-                if venue_dict:
-                    min_value = venue_dict[list(venue_dict.keys())[-1]]
-                else:
-                    min_value = 0
-                aux_dict = self.S22ID('S2venues',
-                                      'venueName',
-                                      'venueID',
-                                      min_value=min_value,
-                                      chunksize=chunksize)
-                venue_dict = {**venue_dict, **aux_dict}
+                    if venue_dict:
+                        min_value = venue_dict[list(venue_dict.keys())[-1]]
+                    else:
+                        min_value = 0
+                    aux_dict = self.S22ID('S2venues',
+                                          'venueName',
+                                          'venueID',
+                                          min_value=min_value,
+                                          chunksize=chunksize)
+                    venue_dict = {**venue_dict, **aux_dict}
 
-                if journal_dict:
-                    min_value = journal_dict[list(journal_dict.keys())[-1]]
-                else:
-                    min_value = 0
-                aux_dict = self.S22ID('S2journals',
-                                      'journalName',
-                                      'journalID',
-                                      min_value=min_value,
-                                      chunksize=chunksize)
-                journal_dict = {**journal_dict, **aux_dict}
+                    if journal_dict:
+                        min_value = journal_dict[list(journal_dict.keys())[-1]]
+                    else:
+                        min_value = 0
+                    aux_dict = self.S22ID('S2journals',
+                                          'journalName',
+                                          'journalID',
+                                          min_value=min_value,
+                                          chunksize=chunksize)
+                    journal_dict = {**journal_dict, **aux_dict}
 
-                if field_dict:
-                    min_value = field_dict[list(field_dict.keys())[-1]]
-                else:
-                    min_value = 0
-                aux_dict = self.S22ID('S2fields',
-                                      'fieldName',
-                                      'fieldID',
-                                      min_value=min_value,
-                                      chunksize=chunksize)
-                field_dict = {**field_dict, **aux_dict}
-                del aux_dict
+                    if field_dict:
+                        min_value = field_dict[list(field_dict.keys())[-1]]
+                    else:
+                        min_value = 0
+                    aux_dict = self.S22ID('S2fields',
+                                          'fieldName',
+                                          'fieldID',
+                                          min_value=min_value,
+                                          chunksize=chunksize)
+                    field_dict = {**field_dict, **aux_dict}
+                    del aux_dict
 
                 file_data = process_paperFile(gzf)
 
@@ -416,7 +420,7 @@ class S2manager(BaseDMsql):
                             df,
                             S2_to_ID=S2_to_ID,
                             chunksize=chunksize,
-                            update=False)
+                            update=update)
 
                 all_venues = file_data[1]
                 all_journals = file_data[2]
@@ -430,7 +434,7 @@ class S2manager(BaseDMsql):
                             df,
                             S2_to_ID=venue_dict,
                             chunksize=chunksize,
-                            update=False)
+                            update=update)
                 df = pd.DataFrame(all_journals, columns=['journalName'])
                 self.upsert('S2journals',
                             'journalName',
@@ -438,7 +442,7 @@ class S2manager(BaseDMsql):
                             df,
                             S2_to_ID=journal_dict,
                             chunksize=chunksize,
-                            update=False)
+                            update=update)
                 df = pd.DataFrame(all_fields, columns=['fieldName'])
                 self.upsert('S2fields',
                             'fieldName',
@@ -446,7 +450,7 @@ class S2manager(BaseDMsql):
                             df,
                             S2_to_ID=field_dict,
                             chunksize=chunksize,
-                            update=False)
+                            update=update)
 
             pbar.close()
 
