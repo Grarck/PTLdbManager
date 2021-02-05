@@ -753,8 +753,15 @@ class BaseDMsql(object):
         # Reorder dataframe to make sure that the key field goes first
         flds = [keyfld] + [x for x in df.columns if x != keyfld]
         df = df[flds]
+
         # Remove nan values
-        df = df.where(pd.notnull(df), None)
+        df.fillna(df.dtypes.replace({
+            'int64': 9999,
+            'float64': 9999,
+            'O': ''
+        }),
+                  inplace=True)
+        # df = df.where(pd.notnull(df), '')
 
         if robust:
             # Create new columns if necessary
