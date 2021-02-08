@@ -146,9 +146,13 @@ def process_Authors(gzf):
     This function takes a zfile with paper information as input
     and returns a list ready to insert in table
     """
-    # Read json and separate papers
-    with gzip.open(gzf, 'rt', encoding='utf8') as f:
-        papers_infile = f.read().replace('}\n{', '},{')
+    try:
+        # Read json and separate papers
+        with gzip.open(gzf, 'rt', encoding='utf8') as f:
+            papers_infile = f.read().replace('}\n{', '},{')
+    except:
+        print(f'Error with file {gzf}')
+        return
 
     papers_infile = json.loads('[' + papers_infile + ']')
 
@@ -798,7 +802,7 @@ class S2manager(BaseDMsql):
         gz_files = [
             data_files + el for el in os.listdir(data_files)
             if el.startswith('s2-corpus')
-        ]
+        ][250:]
         S2_to_ID = self.S22ID('S2authors',
                               'S2authorID',
                               'authorID',
