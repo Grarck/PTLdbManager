@@ -149,7 +149,9 @@ def process_Authors(gzf):
     # Read json and separate papers
     with gzip.open(gzf, 'rt', encoding='utf8') as f:
         papers_infile = f.read().replace('}\n{', '},{')
-        papers_infile = json.loads('[' + papers_infile + ']')
+
+    papers_infile = json.loads('[' + papers_infile + ']')
+
     # Process each paper
     thisfile_authors = []
     for paperEntry in papers_infile:
@@ -785,7 +787,11 @@ class S2manager(BaseDMsql):
 
         return
 
-    def importAuthorsData(self, data_files, ncpu, chunksize=100000, update=False):
+    def importAuthorsData(self,
+                          data_files,
+                          ncpu,
+                          chunksize=100000,
+                          update=False):
 
         print('Filling authors information')
 
@@ -797,6 +803,7 @@ class S2manager(BaseDMsql):
                               'S2authorID',
                               'authorID',
                               chunksize=chunksize)
+
         # S2_to_ID = {}
 
         def chunks(l, n):
@@ -813,10 +820,10 @@ class S2manager(BaseDMsql):
                 else:
                     min_value = 0
                 aux_dict = self.S22ID('S2authors',
-                                    'S2authorID',
-                                    'authorID',
-                                    min_value=min_value,
-                                    chunksize=chunksize)
+                                      'S2authorID',
+                                      'authorID',
+                                      min_value=min_value,
+                                      chunksize=chunksize)
                 S2_to_ID = {**S2_to_ID, **aux_dict}
                 del aux_dict
 
