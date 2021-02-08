@@ -785,7 +785,7 @@ class S2manager(BaseDMsql):
 
         return
 
-    def importAuthorsData(self, data_files, ncpu, chunksize=100000):
+    def importAuthorsData(self, data_files, ncpu, chunksize=100000, update=False):
 
         print('Filling authors information')
 
@@ -793,11 +793,11 @@ class S2manager(BaseDMsql):
             data_files + el for el in os.listdir(data_files)
             if el.startswith('s2-corpus')
         ]
-        # S2_to_ID = self.S22ID('S2authors',
-        #                       'S2authorID',
-        #                       'authorID',
-        #                       chunksize=chunksize)
-        S2_to_ID = {}
+        S2_to_ID = self.S22ID('S2authors',
+                              'S2authorID',
+                              'authorID',
+                              chunksize=chunksize)
+        # S2_to_ID = {}
 
         def chunks(l, n):
             '''Yields successive n-sized chunks from list l.'''
@@ -807,17 +807,18 @@ class S2manager(BaseDMsql):
         for gz_chunk in chunks(gz_files, 10):
             author_counts = []
             #Update dictionary
-            if S2_to_ID:
-                min_value = S2_to_ID[list(S2_to_ID.keys())[-1]]
-            else:
-                min_value = 0
-            aux_dict = self.S22ID('S2authors',
-                                  'S2authorID',
-                                  'authorID',
-                                  min_value=min_value,
-                                  chunksize=chunksize)
-            S2_to_ID = {**S2_to_ID, **aux_dict}
-            del aux_dict
+            if update:
+                if S2_to_ID:
+                    min_value = S2_to_ID[list(S2_to_ID.keys())[-1]]
+                else:
+                    min_value = 0
+                aux_dict = self.S22ID('S2authors',
+                                    'S2authorID',
+                                    'authorID',
+                                    min_value=min_value,
+                                    chunksize=chunksize)
+                S2_to_ID = {**S2_to_ID, **aux_dict}
+                del aux_dict
 
             if ncpu:
                 # Parallel processing
