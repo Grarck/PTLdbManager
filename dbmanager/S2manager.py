@@ -152,7 +152,7 @@ def process_Authors(gzf):
             papers_infile = f.read().replace('}\n{', '},{')
     except:
         print(f'Error with file {gzf}')
-        return
+        return []
 
     papers_infile = json.loads('[' + papers_infile + ']')
 
