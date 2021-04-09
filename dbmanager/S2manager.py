@@ -802,7 +802,7 @@ class S2manager(BaseDMsql):
         gz_files = [
             data_files + el for el in os.listdir(data_files)
             if el.startswith('s2-corpus')
-        ][250:]
+        ]
         S2_to_ID = self.S22ID('S2authors',
                               'S2authorID',
                               'authorID',
@@ -815,7 +815,7 @@ class S2manager(BaseDMsql):
             for i in range(0, len(l), n):
                 yield l[i:i + n]
 
-        for gz_chunk in chunks(gz_files, 10):
+        for gz_chunk in chunks(gz_files, 100):
             author_counts = []
             #Update dictionary
             if update:
@@ -909,38 +909,25 @@ class S2manager(BaseDMsql):
 
         chunksize = 100000
         cont = 0
-        S2_to_ID = {}
-        df = self.readDBtable('S2papers',
-                              limit=chunksize,
-                              selectOptions='paperID, S2paperID',
-                              filterOptions='paperID>0',
-                              orderOptions='paperID ASC')
-        while len(df):
-            cont = cont + len(df)
-            # Next time, we will read from the largest retrieved ID. This is the
-            # last element of the dataframe, given that we requested an ordered df
-            smallest_id = df['paperID'][0]
-            largest_id = df['paperID'][len(df) - 1]
-            print('Number of elements processed:', cont)
-            print('Last Id read:', largest_id)
-            ID_to_S2_list = df.values.tolist()
-            S2_to_ID_list = [[el[1], el[0]] for el in ID_to_S2_list]
-            aux_dict = dict(S2_to_ID_list)
-            S2_to_ID = {**S2_to_ID, **aux_dict}
-            df = self.readDBtable('S2papers',
-                                  limit=chunksize,
-                                  selectOptions='paperID, S2paperID',
-                                  filterOptions='paperID>' + str(largest_id),
-                                  orderOptions='paperID ASC')
+
+        author_to_ID = self.S22ID('S2authors',
+                                  'S2authorID',
+                                  'authorID',
+                                  chunksize=chunksize)
+        paper_to_ID = self.S22ID('S2papers',
+                                 'S2paperID',
+                                 'paperID',
+                                 chunksize=chunksize)
 
         # A pass through all data files is needed to fill in table paperAuthor
-
         def process_Authorship(paperEntry):
             """This function takes a dictionary with paper information as input
             and returns a list ready to insert in paperAuthor
             """
-            author_list = [[S2_to_ID[paperEntry['id']], el['ids'][0]]
-                           for el in paperEntry['authors'] if len(el['ids'])]
+            author_list = [[
+                paper_to_ID[paperEntry['id']],
+                author_to_ID[int(el['ids'][0])]
+            ] for el in paperEntry['authors'] if len(el['ids'])]
 
             return author_list
 
@@ -967,8 +954,6 @@ class S2manager(BaseDMsql):
                                    verbose=True)
         bar.close()
 
-        del S2_to_ID
-
         return
 
     def importEntities(self, data_files):
@@ -993,7 +978,7 @@ class S2manager(BaseDMsql):
             smallest_id = df['paperID'][0]
             largest_id = df['paperID'][len(df) - 1]
             print('Number of elements processed:', cont)
-            print('Last Id read:', largest_id)
+            # print('Last Id read:', largest_id)
             ID_to_S2_list = df.values.tolist()
             S2_to_ID_list = [[el[1], el[0]] for el in ID_to_S2_list]
             aux_dict = dict(S2_to_ID_list)
