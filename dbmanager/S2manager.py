@@ -492,18 +492,21 @@ class S2manager(BaseDMsql):
         # corresponding to each S2paperID
         print('Generating S2 to ID dictionary')
 
-        S2_to_ID = {}
-
-        for df in self.readDBchunks('S2papers',
-                                    'paperID',
-                                    chunksize=chunksize,
-                                    selectOptions='paperID, S2paperID',
-                                    verbose=True):
-            ID_to_S2_list = df.values.tolist()
-            S2_to_ID_list = [[el[1], el[0]] for el in ID_to_S2_list]
-            aux_dict = dict(S2_to_ID_list)
-            S2_to_ID = {**S2_to_ID, **aux_dict}
-        del df
+        # S2_to_ID = {}
+        # for df in self.readDBchunks('S2papers',
+        #                             'paperID',
+        #                             chunksize=chunksize,
+        #                             selectOptions='paperID, S2paperID',
+        #                             verbose=True):
+        #     ID_to_S2_list = df.values.tolist()
+        #     S2_to_ID_list = [[el[1], el[0]] for el in ID_to_S2_list]
+        #     aux_dict = dict(S2_to_ID_list)
+        #     S2_to_ID = {**S2_to_ID, **aux_dict}
+        # del df
+        S2_to_ID = self.S22ID('S2papers',
+                              'S2paperID',
+                              'paperID',
+                              chunksize=chunksize)
 
         # Read files
         gz_files = sorted([
@@ -514,10 +517,11 @@ class S2manager(BaseDMsql):
         if ncpu:
             # Parallel processing
             new_citations = pd.DataFrame()
-            aux_list = []
+            # aux_list = []
             with Pool(ncpu) as p:
                 with tqdm(total=len(gz_files)) as pbar:
                     for cite_list in p.imap(process_Citations, gz_files):
+                        aux_list = []
                         print()
                         pbar.update()
                         for cite in cite_list:
@@ -526,6 +530,20 @@ class S2manager(BaseDMsql):
                                     [S2_to_ID[cite[0]], S2_to_ID[cite[1]]])
                             except:
                                 pass
+                        
+                        citations_df = pd.DataFrame(aux_list)
+                        citations_df.columns = ['paperID1', 'paperID2']
+                        # Delete from table previous information of papers
+                        delete = [[val] for val in citations_df['paperID1'].values]
+                        self.deleteFromTable('citations',
+                                            'paperID1',
+                                            delete,
+                                            chunksize=chunksize)
+                        # Introduce new data
+                        self.insertInTable('citations', ['paperID1', 'paperID2'],
+                                        citations_df.values,
+                                        chunksize=chunksize,
+                                        verbose=True)
             pbar.close()
             p.close()
             p.join()
@@ -535,8 +553,9 @@ class S2manager(BaseDMsql):
             pbar = tqdm(total=len(gz_files))
             pbar.clear()
 
-            aux_list = []
+            # aux_list = []
             for gzf in gz_files:
+                aux_list = []
                 pbar.update(1)
                 cite_list = process_Citations(gzf)
 
@@ -545,34 +564,50 @@ class S2manager(BaseDMsql):
                         aux_list.append([S2_to_ID[cite[0]], S2_to_ID[cite[1]]])
                     except:
                         pass
+                
+                citations_df = pd.DataFrame(aux_list)
+                citations_df.columns = ['paperID1', 'paperID2']
 
-        # Populate tables with the new data
-        citations_fdf = pd.DataFrame(aux_list)
-        new_citations = pd.concat([citations_fdf], ignore_index=True)
-        new_citations.columns = ['paperID1', 'paperID2']
+                # Delete from table previous information of papers
+                delete = [[val] for val in citations_df['paperID1'].values]
+                self.deleteFromTable('citations',
+                                    'paperID1',
+                                    delete,
+                                    chunksize=chunksize)
+                # Introduce new data
+                self.insertInTable('citations', ['paperID1', 'paperID2'],
+                                citations_df.values,
+                                chunksize=chunksize,
+                                verbose=True)
+                
 
-        del citations_fdf
+        # # Populate tables with the new data
+        # citations_fdf = pd.DataFrame(aux_list)
+        # new_citations = pd.concat([citations_fdf], ignore_index=True)
+        # new_citations.columns = ['paperID1', 'paperID2']
 
-        print('Filling in citations...\n')
-        bar = tqdm(total=len(gz_files))
+        # del citations_fdf
 
-        # Delete from table previous information of papers
-        delete = [[val] for val in new_citations['paperID1'].values]
+        # print('Filling in citations...\n')
+        # bar = tqdm(total=len(gz_files))
 
-        self.deleteFromTable('citations',
-                             'paperID1',
-                             delete,
-                             chunksize=chunksize)
+        # # Delete from table previous information of papers
+        # delete = [[val] for val in new_citations['paperID1'].values]
 
-        # Introduce new data
-        self.insertInTable('citations', ['paperID1', 'paperID2'],
-                           new_citations.values,
-                           chunksize=chunksize,
-                           verbose=True)
+        # self.deleteFromTable('citations',
+        #                      'paperID1',
+        #                      delete,
+        #                      chunksize=chunksize)
 
-        bar.close()
+        # # Introduce new data
+        # self.insertInTable('citations', ['paperID1', 'paperID2'],
+        #                    new_citations.values,
+        #                    chunksize=chunksize,
+        #                    verbose=True)
 
-        del S2_to_ID
+        # bar.close()
+
+        # del S2_to_ID
 
         return
 
@@ -925,8 +960,7 @@ class S2manager(BaseDMsql):
             and returns a list ready to insert in paperAuthor
             """
             author_list = [[
-                paper_to_ID[paperEntry['id']],
-                author_to_ID[int(el['ids'][0])]
+                paper_to_ID[paperEntry['id']], author_to_ID[int(el['ids'][0])]
             ] for el in paperEntry['authors'] if len(el['ids'])]
 
             return author_list
