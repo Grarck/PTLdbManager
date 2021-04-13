@@ -534,11 +534,13 @@ class S2manager(BaseDMsql):
                         citations_df = pd.DataFrame(aux_list)
                         citations_df.columns = ['paperID1', 'paperID2']
                         # Delete from table previous information of papers
-                        delete = [[val] for val in citations_df['paperID1'].values]
-                        self.deleteFromTable('citations',
-                                            'paperID1',
-                                            delete,
-                                            chunksize=chunksize)
+                        # t0 = time.time()
+                        # delete = [[val] for val in citations_df['paperID1'].values]
+                        # self.deleteFromTable('citations',
+                        #                     'paperID1',
+                        #                     delete,
+                        #                     chunksize=chunksize)
+                        # print("TIEMPO:", time.time()-t0)
                         # Introduce new data
                         self.insertInTable('citations', ['paperID1', 'paperID2'],
                                         citations_df.values,
@@ -568,12 +570,12 @@ class S2manager(BaseDMsql):
                 citations_df = pd.DataFrame(aux_list)
                 citations_df.columns = ['paperID1', 'paperID2']
 
-                # Delete from table previous information of papers
-                delete = [[val] for val in citations_df['paperID1'].values]
-                self.deleteFromTable('citations',
-                                    'paperID1',
-                                    delete,
-                                    chunksize=chunksize)
+                # # Delete from table previous information of papers
+                # delete = [[val] for val in citations_df['paperID1'].values]
+                # self.deleteFromTable('citations',
+                #                     'paperID1',
+                #                     delete,
+                #                     chunksize=chunksize)
                 # Introduce new data
                 self.insertInTable('citations', ['paperID1', 'paperID2'],
                                 citations_df.values,
