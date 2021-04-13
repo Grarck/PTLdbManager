@@ -530,7 +530,7 @@ class S2manager(BaseDMsql):
                                     [S2_to_ID[cite[0]], S2_to_ID[cite[1]]])
                             except:
                                 pass
-                        
+
                         citations_df = pd.DataFrame(aux_list)
                         citations_df.columns = ['paperID1', 'paperID2']
                         # Delete from table previous information of papers
@@ -542,10 +542,11 @@ class S2manager(BaseDMsql):
                         #                     chunksize=chunksize)
                         # print("TIEMPO:", time.time()-t0)
                         # Introduce new data
-                        self.insertInTable('citations', ['paperID1', 'paperID2'],
-                                        citations_df.values,
-                                        chunksize=chunksize,
-                                        verbose=True)
+                        self.insertInTable('citations',
+                                           ['paperID1', 'paperID2'],
+                                           citations_df.values,
+                                           chunksize=chunksize,
+                                           verbose=True)
             pbar.close()
             p.close()
             p.join()
@@ -566,7 +567,7 @@ class S2manager(BaseDMsql):
                         aux_list.append([S2_to_ID[cite[0]], S2_to_ID[cite[1]]])
                     except:
                         pass
-                
+
                 citations_df = pd.DataFrame(aux_list)
                 citations_df.columns = ['paperID1', 'paperID2']
 
@@ -578,10 +579,9 @@ class S2manager(BaseDMsql):
                 #                     chunksize=chunksize)
                 # Introduce new data
                 self.insertInTable('citations', ['paperID1', 'paperID2'],
-                                citations_df.values,
-                                chunksize=chunksize,
-                                verbose=True)
-                
+                                   citations_df.values,
+                                   chunksize=chunksize,
+                                   verbose=True)
 
         # # Populate tables with the new data
         # citations_fdf = pd.DataFrame(aux_list)
@@ -911,7 +911,7 @@ class S2manager(BaseDMsql):
                         chunksize=chunksize,
                         update=False)
 
-    def importAuthors(self, data_files):
+    def importAuthors(self, data_files, chunksize=1000000):
         """Imports Authorship information (paper-author data)"""
         """
                 thisfile_authors = []
@@ -944,7 +944,6 @@ class S2manager(BaseDMsql):
         # corresponding to each S2paperID
         print('Generating S2 to ID dictionary')
 
-        chunksize = 100000
         cont = 0
 
         author_to_ID = self.S22ID('S2authors',

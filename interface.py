@@ -165,7 +165,7 @@ def main(interface=False,
             # 6. If activated, authorship data
             # will be imported from S2 data files
             print('Importing authorship data ...')
-            DB.importAuthors(data_files)
+            DB.importAuthors(data_files, chunksize)
 
         elif selection == '7':
             # 7. If activated, entities associated to each paper
